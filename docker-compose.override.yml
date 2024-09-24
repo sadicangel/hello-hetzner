@@ -1,0 +1,9 @@
+services:
+  traefik:
+    command:
+      - --log.level=DEBUG
+      - --certificatesResolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
+
+  webapi:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
