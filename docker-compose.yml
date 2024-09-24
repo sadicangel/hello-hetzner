@@ -1,32 +1,30 @@
 services:
   traefik:
-    image: traefik:2.4.8
+    image: traefik
     command:
-      - --entrypoints.http.address=:80
-      - --entrypoints.https.address=:443
-
+      - --log.level=${TRAEFIK_LOG_LEVEL:-ERROR}
       - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
 
-      - --api=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.asDefault=true
+      - --entrypoints.websecure.http.tls.certresolver=${CERT_RESOLVER}
 
       - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
-      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=http
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
       - --certificatesresolvers.letsencrypt.acme.email=${EMAIL}
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      # - --certificatesResolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
     labels:
-      - traefik.http.routers.to-https.rule=HostRegexp(`{host:.+}`)
-      - traefik.http.routers.to-https.entrypoints=http
-      - traefik.http.routers.to-https.middlewares=to-https
-
-      - traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)
-      - traefik.http.routers.traefik.entrypoints=https
-      - traefik.http.routers.traefik.middlewares=auth
-      - traefik.http.routers.traefik.service=api@internal
-      - traefik.http.routers.traefik.tls=true
-      - traefik.http.routers.traefik.tls.certresolver=${CERT_RESOLVER}
-
-      - traefik.http.middlewares.to-https.redirectscheme.scheme=https
-      - traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_USER}:${TRAEFIK_PASSWORD_HASH}
+      - traefik.enable=true
+      - traefik.http.routers.reverse-proxy.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.reverse-proxy.entrypoints=websecure
+      - traefik.http.routers.reverse-proxy.tls=true
+      - traefik.http.routers.reverse-proxy.tls.certresolver=${CERT_RESOLVER}
     ports:
       - 80:80
       - 443:443
@@ -39,8 +37,11 @@ services:
     build:
       context: .
       dockerfile: src/WebApi/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     labels:
-      - traefik.http.routers.webapp.rule=Host(`${DOMAIN}`)
-      - traefik.http.routers.webapp.entrypoints=https
-      - traefik.http.routers.webapp.tls=true
-      - traefik.http.routers.webapp.tls.certresolver=${CERT_RESOLVER}
+      - traefik.enable=true
+      - traefik.http.routers.webapi.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.webapi.entrypoints=websecure
+      - traefik.http.routers.webapi.tls=true
+      - traefik.http.routers.webapi.tls.certresolver=${CERT_RESOLVER}
