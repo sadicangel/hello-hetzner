@@ -1,0 +1,42 @@
+services:
+  traefik:
+    image: traefik
+    command:
+      - --log.level=${TRAEFIK_LOG_LEVEL:-ERROR}
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.asDefault=true
+      - --entrypoints.websecure.http.tls.certresolver=${CERT_RESOLVER}
+
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.letsencrypt.acme.email=${EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      # - --certificatesResolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.reverse-proxy.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.reverse-proxy.entrypoints=websecure
+      - traefik.http.routers.reverse-proxy.tls=true
+      - traefik.http.routers.reverse-proxy.tls.certresolver=${CERT_RESOLVER}
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./data/letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  webapi:
+    image: ${DOCKER_REGISTRY-}webapi
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.webapi.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.webapi.entrypoints=websecure
+      - traefik.http.routers.webapi.tls=true
+      - traefik.http.routers.webapi.tls.certresolver=${CERT_RESOLVER}
