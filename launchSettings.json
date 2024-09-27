@@ -4,10 +4,10 @@
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
       "composeLaunchAction": "LaunchBrowser",
-      "composeLaunchServiceName": "webapi",
-      "composeLaunchUrl": "{Scheme}://localhost:{ServicePort}/",
+      "composeLaunchServiceName": "helloworld",
+      "composeLaunchUrl": "{Scheme}://localhost",
       "serviceActions": {
-        "webapi": "StartDebugging",
+        "helloworld": "StartDebugging",
         "traefik": "StartWithoutDebugging"
       }
     }
