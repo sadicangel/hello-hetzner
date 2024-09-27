@@ -4,7 +4,6 @@ services:
     command:
       - --api.dashboard=true
 
-      - --log.level=${TRAEFIK_LOG_LEVEL:-ERROR}
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
 
@@ -14,7 +13,7 @@ services:
 
       - --entrypoints.websecure.address=:443
       - --entrypoints.websecure.asDefault=true
-      - --entrypoints.websecure.http.tls.certresolver=${CERT_RESOLVER}
+      - --entrypoints.websecure.http.tls.certresolver=letsencrypt
 
       - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
       - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
@@ -26,12 +25,16 @@ services:
       - traefik.http.routers.reverse-proxy.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.reverse-proxy.entrypoints=websecure
       - traefik.http.routers.reverse-proxy.tls=true
-      - traefik.http.routers.reverse-proxy.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.reverse-proxy.tls.certresolver=letsencrypt
 
       - traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
       - traefik.http.routers.dashboard.service=api@internal
+      - traefik.http.routers.dashboard.entrypoints=websecure
+      - traefik.http.routers.dashboard.tls=true
+      - traefik.http.routers.dashboard.tls.certresolver=letsencrypt
       - traefik.http.routers.dashboard.middlewares=basic-auth
-      - traefik.http.middlewares.basic-auth.basicauth.users=root:$$apr1$$H6uskkkW$$7vjEYH0XwAGhZOIrOpE0A.
+
+      - traefik.http.middlewares.basic-auth.basicauth.users=${AUTH}
     ports:
       - 80:80
       - 443:443
@@ -48,5 +51,5 @@ services:
       - traefik.http.routers.helloworld.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.helloworld.entrypoints=websecure
       - traefik.http.routers.helloworld.tls=true
-      - traefik.http.routers.helloworld.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.helloworld.tls.certresolver=letsencrypt
       - traefik.http.services.helloworld.loadbalancer.server.port=5000
