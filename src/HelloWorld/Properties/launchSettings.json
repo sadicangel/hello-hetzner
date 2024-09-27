@@ -4,21 +4,24 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
+        "ASPNETCORE_HTTP_PORTS": "5000",
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "http://localhost:5054"
+      "applicationUrl": "http://localhost:5000"
     },
     "Container (Dockerfile)": {
       "commandName": "Docker",
       "launchBrowser": true,
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
       "environmentVariables": {
-        "ASPNETCORE_HTTP_PORTS": "5054"
+        "ASPNETCORE_HTTP_PORTS": "5000",
+        "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "publishAllPorts": false,
-      "useSSL": false
+      "publishAllPorts": true,
+      "useSSL": false,
+      "httpPort": 5000
     }
   },
-  "$schema": "https://json.schemastore.org/launchsettings.json"
+  "$schema": "http://json.schemastore.org/launchsettings.json"
 }
