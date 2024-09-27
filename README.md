@@ -1,20 +1,18 @@
 # hello-hetzner
-A webapi that says hello.
-
-Configured using [Traefik](https://traefik.io/traefik/) to redirect http to https and generate SSL certificates with [Let's Encrypt](https://letsencrypt.org/).  
+A simple blazor webapp running behind [Traefik](https://traefik.io/traefik/), supporting http->https redirection and SSL certificates using [Let's Encrypt](https://letsencrypt.org/).
 
 All services run inside [Docker](https://www.docker.com/), so the server must have it installed.
 
-Both 80 and 443 ports should be exposed by the server.
+Ther server also needs to export ports 80 and 443.
 
 ## Build all images locally
 ```pwsh
 docker compose up -d --build
 ```
 
-## Copy all images to the server
+## Copy hellowworld image to the server
 ```pwsh
-docker save webapi | gzip | ssh root@cerquido.net docker load
+docker save helloworld:latest | gzip | ssh username@hostname docker load
 ```
 > [!NOTE]
 > You may have to install gzip (windows: `winget install GnuWin32.Gzip`) and add it to the PATH.
@@ -24,19 +22,22 @@ docker save webapi | gzip | ssh root@cerquido.net docker load
 scp .\docker-compose.prod.yml username@hostname:/opt/hello-hetzner/docker-compose.yml
 ```
 > [!NOTE]
-> On traefik server, uncomment the caServer command if you want to use Let's Encrypt staging environment.
+> On docker-compose.yml, you can uncomment the `caServer` command if you want to use Let's Encrypt staging environment.
 
 ## Create .env file in /opt/hello-hetzner
-```env
-DOMAIN=yourdomain.com
-EMAIL=username@email.com
-CERT_RESOLVER=letsencrypt
-TRAEFIK_LOG_LEVEL=
+```pwsh
+echo "DOMAIN=yourdomain`nEMAIL=youremail`nAUTH=username:apr1-md5-hashed-password" | ssh username@hostname -T "cat | sed 's/\r$//' > /opt/hello-hetzner/.env"
 ```
 > [!NOTE]
-> [TRAEFIK_LOG_LEVEL](https://doc.traefik.io/traefik/observability/logs/#level) should only be set when debugging errors, otherwise it should be left empty.
+> You can get the password in the right format by running:
+>  ```bash
+> echo $(htpasswd -nb username password) | sed -e s/\\$/\\$\\$/gH`
+>  ```
+> The basic authentation is only needed to access Traefik dashboards.  
+> You also need to configure the "traefik" subdomain by having A and AAAA records pointing to your server.
 
 ## Start containers
+On the remove server, navigate to `/opt/hello-hetzner/` and run the following command to start the containers:
 ```bash
 docker compose up -d --build
 ```
